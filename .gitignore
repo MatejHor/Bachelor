@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# data
+data/pcam/
+*.h5
+data/pcam/camelyonpatch_level_2_split_train_x.h5
