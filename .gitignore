@@ -130,6 +130,5 @@ dmypy.json
 
 
 # data
-data/pcam/
+data/pcam/*
 *.h5
-data/pcam/camelyonpatch_level_2_split_train_x.h5
