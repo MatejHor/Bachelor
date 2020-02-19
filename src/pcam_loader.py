@@ -14,10 +14,12 @@ from __future__ import print_function
 
 import os
 
-import pandas as pd
+# import pandas as pd
 from keras.utils import HDF5Matrix
 from keras.utils.data_utils import get_file
 from keras import backend as K
+import pandas as pd
+
 
 
 def get_unzip_file(fname,

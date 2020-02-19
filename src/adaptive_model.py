@@ -76,50 +76,33 @@ def encoder_multiple_upsampling_layer(layer):
     return output
 
 
-def get_gabor_tensor(ksize, sigmas, thetas, lambdas, gammas, psis):
-    n_kernels = len(sigmas) * len(thetas) * len(lambdas) * len(gammas) * len(psis)
-    gabors = []
-    for sigma in sigmas:
-        for theta in thetas:
-            for lambd in lambdas:
-                for gamma in gammas:
-                    for psi in psis:
-                        params = {'ksize': ksize, 'sigma': sigma,
-                                  'theta': theta, 'lambd': lambd,
-                                  'gamma': gamma, 'psi': psi}
-                        gf = cv2.getGaborKernel(**params, ktype=cv2.CV_32F)
-                        gf = K.expand_dims(gf, -1)
-                        gabors.append(gf)
-    assert len(gabors) == n_kernels
-    print(f"Created {n_kernels} kernels.")
-    return K.stack(gabors, axis=-1)
+def gabor_filter(shape, dtype=None):
+    filters = []
+    ksize = shape[0]
+    for theta in np.arange(0, np.pi, np.pi / shape[3]):
+        params = {'ksize':(ksize, ksize), 'sigma':1.0, 'theta':theta, 'lambd':15.0,
+                  'gamma':0.02, 'psi':0, 'ktype':cv2.CV_32F}
+        kernel = cv2.getGaborKernel(**params)
+        kernel /= 1.5*kernel.sum()
+        
+        reshaped_kernel = []
+        for row in kernel:
+            row_kernel = []
+            for column in row:
+                row_kernel.append([[column],[column],[column]])
+            reshaped_kernel.append(row_kernel)
+    return K.variable(np.array(reshaped_kernel), dtype='float32')
+#     f = np.array([
+#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]],
+#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]],
+#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]]
+#         ])
 
 
-def convolve_tensor(x, kernel_tensor=None):
-    return K.conv2d(x, kernel_tensor, padding='same')
+def gabor_layer(layer):
+    layer = Conv2D(filters=1, kernel_size = 3, kernel_initializer=gabor_filter, strides=2, padding='valid')(layer)
+    return layer
 
-
-def gabor_layer(layer, n_filters=16, kernel_size=3):
-    ksize=(3, 3)
-    sigmas = [1, 2, 3, 4]
-    thetas = np.linspace(0, np.pi, 4, endpoint=False)
-    lambdas=[8, 16, 32, 64]
-    psis = np.linspace(0, 2*np.pi, 2, endpoint=False)
-    gammas = np.linspace(1, 0, 2, endpoint=False)
-    
-    tensor = get_gabor_tensor(ksize, sigmas, thetas, lambdas, gammas, psis)
-    
-    x = Lambda(convolve_tensor, arguments={'kernel_tensor': tensor})(layer)
-    c1 = Conv2D(filters=16, kernel_size=(3, 3), padding='same')(layer)
-    p1 = MaxPooling2D((2, 2))(c1)
-    output = Dropout(0.1)(p1)
-    return output
-
-
-#     params = {'ksize': (3, 3), 'sigma': 1.0, 'theta': 0, 'lambd': 15.0, 'gamma': 0.02}
-#     gab_filter = cv2.getGaborKernel(**params)
-#     gab_filter = tf.expand_dims(gab_filter, 2)
-#     gab_filter = tf.expand_dims(gab_filter, 3)
 
 def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     
