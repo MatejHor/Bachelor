@@ -40,41 +40,41 @@ def output_layer(layer):
     return output
 
 
-def unet_layer(layer):
-    c1 = conv_layer(layer, 16, kernel_size=3, batchnorm=True)
+def unet_layer(layer, kernel_size=3, n_filters=16):
+    c1 = conv_layer(layer, n_filters, kernel_size=kernel_size, batchnorm=True)
     p1 = MaxPooling2D((2, 2))(c1)
     output = Dropout(0.1)(p1)
     return output
 
 
-def encoder_layer(layer):
-    c1 = Conv2D(32, (3, 3), activation='relu', padding='same')(layer)
+def encoder_layer(layer, kernel_size=3, n_filters=32):
+    c1 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(layer)
     c1 = Dropout(0.2)(c1)
-    c1 = Conv2D(32, (3, 3), activation='relu', padding='same')(c1)
+    c1 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(c1)
     p1 = MaxPooling2D((2, 2))(c1)
 
-    c2 = Conv2D(32, (3, 3), activation='relu', padding='same')(p1)
+    c2 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(p1)
     c2 = Dropout(0.2)(c2)
-    c2 = Conv2D(32, (3, 3), activation='relu', padding='same')(c2)
+    c2 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(c2)
     output = Concatenate(axis=-1)([UpSampling2D((2, 2))(c2), c1])
     return output
 
 
-def encoder_multiple_upsampling_layer(layer):
-    x1 = Conv2D(16, (3, 3), activation='relu', padding='same')(layer)
-    x2 = MaxPooling2D((2, 2), padding='same')(x1)
-    x3 = Conv2D(8, (3, 3), activation='relu', padding='same')(x2)
-    x4 = MaxPooling2D((2, 2), padding='same')(x3)
-    x5 = Conv2D(8, (3, 3), activation='relu', padding='same')(x4)
-    encoded = MaxPooling2D((2, 2), padding='same')(x5)
+# def encoder_multiple_upsampling_layer(layer):
+#     x1 = Conv2D(16, (3, 3), activation='relu', padding='same')(layer)
+#     x2 = MaxPooling2D((2, 2), padding='same')(x1)
+#     x3 = Conv2D(8, (3, 3), activation='relu', padding='same')(x2)
+#     x4 = MaxPooling2D((2, 2), padding='same')(x3)
+#     x5 = Conv2D(8, (3, 3), activation='relu', padding='same')(x4)
+#     encoded = MaxPooling2D((2, 2), padding='same')(x5)
 
-    x6 = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
-    x7 = UpSampling2D((2, 2))(x6)
-    x8 = Conv2D(8, (3, 3), activation='relu', padding='same')(x7)
-    x9 = UpSampling2D((2, 2))(x8)
-    x10 = Conv2D(16, (3, 3), activation='relu')(x9)
-    output = UpSampling2D((2, 2))(x10)
-    return output
+#     x6 = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
+#     x7 = UpSampling2D((2, 2))(x6)
+#     x8 = Conv2D(8, (3, 3), activation='relu', padding='same')(x7)
+#     x9 = UpSampling2D((2, 2))(x8)
+#     x10 = Conv2D(16, (3, 3), activation='relu')(x9)
+#     output = UpSampling2D((2, 2))(x10)
+#     return output
 
 
 def gabor_filter(model):
@@ -98,8 +98,8 @@ def gabor_filter(model):
     return weightMatrix
             
     
-def gabor_layer(layer):
-    conv = Conv2D(32, (7, 7), padding='same', activation='relu', trainable=False)(layer)
+def gabor_layer(layer, kernel_size=7, n_filters=32):
+    conv = Conv2D(n_filters, (kernel_size, kernel_size), padding='same', activation='relu', trainable=False)(layer)
     return conv
 
 
@@ -123,7 +123,6 @@ def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     
     c5 = conv_layer(p4, n_filters = n_filters * 16, kernel_size = 3, batchnorm = batchnorm)
     
-    # Expansive Path
     u6 = Conv2DTranspose(n_filters * 8, (3, 3), strides = (2, 2), padding = 'same')(c5)
     u6 = concatenate([u6, c4])
     u6 = Dropout(dropout)(u6)
