@@ -1,6 +1,7 @@
 import tensorflow as tf
 import cv2
 import numpy as np
+import itertools
 from keras.layers.merge import concatenate
 from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization
@@ -16,13 +17,13 @@ def define_model(input_layer, output_layer):
 
 def conv_layer(input_tensor, n_filters, kernel_size=3, batchnorm=True):
     x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer='he_normal',
-               padding='same')(input_tensor)
+               padding='same', trainable=True)(input_tensor)
     if batchnorm:
         x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
     x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer='he_normal',
-               padding='same')(input_tensor)
+               padding='same', trainable=True)(input_tensor)
     if batchnorm:
         x = BatchNormalization()(x)
     x = Activation('relu')(x)
@@ -46,7 +47,7 @@ def unet_layer(layer):
     return output
 
 
-def encoder_concatenate_layer(layer):
+def encoder_layer(layer):
     c1 = Conv2D(32, (3, 3), activation='relu', padding='same')(layer)
     c1 = Dropout(0.2)(c1)
     c1 = Conv2D(32, (3, 3), activation='relu', padding='same')(c1)
@@ -60,48 +61,46 @@ def encoder_concatenate_layer(layer):
 
 
 def encoder_multiple_upsampling_layer(layer):
-    x = Conv2D(16, (3, 3), activation='relu', padding='same')(layer)
-    x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-    encoded = MaxPooling2D((2, 2), padding='same')(x)
+    x1 = Conv2D(16, (3, 3), activation='relu', padding='same')(layer)
+    x2 = MaxPooling2D((2, 2), padding='same')(x1)
+    x3 = Conv2D(8, (3, 3), activation='relu', padding='same')(x2)
+    x4 = MaxPooling2D((2, 2), padding='same')(x3)
+    x5 = Conv2D(8, (3, 3), activation='relu', padding='same')(x4)
+    encoded = MaxPooling2D((2, 2), padding='same')(x5)
 
-    x = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
-    x = UpSampling2D((2, 2))(x)
-    x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-    x = UpSampling2D((2, 2))(x)
-    x = Conv2D(16, (3, 3), activation='relu')(x)
-    output = UpSampling2D((2, 2))(x)
+    x6 = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
+    x7 = UpSampling2D((2, 2))(x6)
+    x8 = Conv2D(8, (3, 3), activation='relu', padding='same')(x7)
+    x9 = UpSampling2D((2, 2))(x8)
+    x10 = Conv2D(16, (3, 3), activation='relu')(x9)
+    output = UpSampling2D((2, 2))(x10)
     return output
 
 
-def gabor_filter(shape, dtype=None):
-    filters = []
-    ksize = shape[0]
-    for theta in np.arange(0, np.pi, np.pi / shape[3]):
-        params = {'ksize':(ksize, ksize), 'sigma':1.0, 'theta':theta, 'lambd':15.0,
-                  'gamma':0.02, 'psi':0, 'ktype':cv2.CV_32F}
-        kernel = cv2.getGaborKernel(**params)
-        kernel /= 1.5*kernel.sum()
-        
-        reshaped_kernel = []
-        for row in kernel:
-            row_kernel = []
-            for column in row:
-                row_kernel.append([[column],[column],[column]])
-            reshaped_kernel.append(row_kernel)
-    return K.variable(np.array(reshaped_kernel), dtype='float32')
-#     f = np.array([
-#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]],
-#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]],
-#             [[[1],[1],[1]], [[0],[0],[0]], [[-1],[-1],[-1]]]
-#         ])
-
-
+def gabor_filter(model):
+    weightMatrix = [(np.empty(model.layers[1].get_weights()[0].shape, dtype=float)), 
+                    (np.empty(model.layers[1].get_weights()[1].shape, dtype=float))]
+    orient = 6
+    start_lam = 1
+    stop_lam = 1
+    num_lam = 1
+    lambdMatrix = np.linspace(start_lam, stop_lam, num_lam)
+    lambdMatrix = np.resize(lambdMatrix, [weightMatrix[0].shape[3]])
+    orientMatrix = np.array([(j/orient)*np.pi for j in range(orient)])
+    orientMatrix = np.resize(orientMatrix, [weightMatrix[0].shape[3]])
+    lamOrientMatrix = list(itertools.product(orientMatrix, lambdMatrix))
+    ksize = weightMatrix[0].shape[0]
+    for i in range(weightMatrix[0].shape[3]):
+        weightMatrix[0][:,:,0,i] = cv2.getGaborKernel((ksize, ksize), 5.0, lamOrientMatrix[i][0],\
+                                                      lamOrientMatrix[i][1], 1, 0, ktype=cv2.CV_32F)
+    # Set Bias
+    weightMatrix[1][:] = 1
+    return weightMatrix
+            
+    
 def gabor_layer(layer):
-    layer = Conv2D(filters=1, kernel_size = 3, kernel_initializer=gabor_filter, strides=2, padding='valid')(layer)
-    return layer
+    conv = Conv2D(32, (7, 7), padding='same', activation='relu', trainable=False)(layer)
+    return conv
 
 
 def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
@@ -124,6 +123,7 @@ def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     
     c5 = conv_layer(p4, n_filters = n_filters * 16, kernel_size = 3, batchnorm = batchnorm)
     
+    # Expansive Path
     u6 = Conv2DTranspose(n_filters * 8, (3, 3), strides = (2, 2), padding = 'same')(c5)
     u6 = concatenate([u6, c4])
     u6 = Dropout(dropout)(u6)
@@ -144,5 +144,5 @@ def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     u9 = Dropout(dropout)(u9)
     c9 = conv_layer(u9, n_filters * 1, kernel_size = 3, batchnorm = batchnorm)
     
-    output = Conv2D(1, (1, 1), activation='sigmoid')(c9)
-    return output_layer(output)
+    outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
+    return outputs
