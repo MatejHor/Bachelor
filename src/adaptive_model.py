@@ -144,4 +144,4 @@ def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     c9 = conv_layer(u9, n_filters * 1, kernel_size = 3, batchnorm = batchnorm)
     
     outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
-    return outputs
+    return output_layer(outputs)
