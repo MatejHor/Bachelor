@@ -130,5 +130,5 @@ dmypy.json
 
 
 # data
-data/pcam/*
+data/*
 *.h5
