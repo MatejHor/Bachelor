@@ -4,7 +4,7 @@ import numpy as np
 import itertools
 from keras.layers.merge import concatenate
 from keras.models import Sequential, Model
-from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization
+from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, GlobalAveragePooling2D
 from keras.layers import Activation, Flatten, Dropout, Conv2DTranspose, LeakyReLU, Concatenate, Lambda
 
 from tensorflow.keras import backend as K
@@ -34,9 +34,18 @@ def input_layer(shape):
     return Input(shape=shape, name='img')
 
 
-def output_layer(layer):
+def flatten_layer(layer):
     output = Flatten()(layer)
-    output = Dense(2, activation='softmax')(output)
+    return output
+
+
+def transfer_layer(layer):
+    output = GlobalAveragePooling2D()(layer)
+    return output
+
+
+def output_layer(layer):
+    output = Dense(2, activation='softmax')(layer)
     return output
 
 
@@ -144,4 +153,4 @@ def unet_model(layer, n_filters=16, dropout=0.1, batchnorm=True):
     c9 = conv_layer(u9, n_filters * 1, kernel_size = 3, batchnorm = batchnorm)
     
     outputs = Conv2D(1, (1, 1), activation='sigmoid')(c9)
-    return output_layer(outputs)
+    return outputs
