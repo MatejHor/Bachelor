@@ -132,3 +132,5 @@ dmypy.json
 # data
 data/*
 *.h5
+Test_dataset.hdf5
+Train_dataset.hdf5
