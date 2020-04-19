@@ -1,5 +1,6 @@
 import tensorflow as tf
 import cv2
+import random 
 import numpy as np
 import itertools
 from keras.layers.merge import concatenate
@@ -15,8 +16,12 @@ def define_model(input_layer, output_layer):
     return model
 
 
-def conv_layer(input_tensor, n_filters, kernel_size=3, batchnorm=True):
-    x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer='he_normal',
+def conv_layer(input_tensor, n_filters, kernel_size=3, batchnorm=True, name=None):
+    if name:
+        x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer='he_normal',
+               padding='same', trainable=True, name='first_layer')(input_tensor)
+    else:
+        x = Conv2D(filters=n_filters, kernel_size=(kernel_size, kernel_size), kernel_initializer='he_normal',
                padding='same', trainable=True)(input_tensor)
     if batchnorm:
         x = BatchNormalization()(x)
@@ -50,65 +55,54 @@ def output_layer(layer):
 
 
 def unet_layer(layer, kernel_size=3, n_filters=16):
-    c1 = conv_layer(layer, n_filters, kernel_size=kernel_size, batchnorm=True)
+    c1 = conv_layer(layer, n_filters, kernel_size=kernel_size, batchnorm=True, name='first_layer')
     p1 = MaxPooling2D((2, 2))(c1)
     output = Dropout(0.1)(p1)
     return output
 
 
 def encoder_layer(layer, kernel_size=3, n_filters=32):
-    c1 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(layer)
+    c1 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same', name='first_layer')(layer)
     c1 = Dropout(0.2)(c1)
     c1 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(c1)
     p1 = MaxPooling2D((2, 2))(c1)
 
     c2 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(p1)
     c2 = Dropout(0.2)(c2)
-    c2 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same')(c2)
+    c2 = Conv2D(n_filters, (kernel_size, kernel_size), activation='relu', padding='same', name='second_layer')(c2)
     output = Concatenate(axis=-1)([UpSampling2D((2, 2))(c2), c1])
     return output
 
 
-# def encoder_multiple_upsampling_layer(layer):
-#     x1 = Conv2D(16, (3, 3), activation='relu', padding='same')(layer)
-#     x2 = MaxPooling2D((2, 2), padding='same')(x1)
-#     x3 = Conv2D(8, (3, 3), activation='relu', padding='same')(x2)
-#     x4 = MaxPooling2D((2, 2), padding='same')(x3)
-#     x5 = Conv2D(8, (3, 3), activation='relu', padding='same')(x4)
-#     encoded = MaxPooling2D((2, 2), padding='same')(x5)
-
-#     x6 = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
-#     x7 = UpSampling2D((2, 2))(x6)
-#     x8 = Conv2D(8, (3, 3), activation='relu', padding='same')(x7)
-#     x9 = UpSampling2D((2, 2))(x8)
-#     x10 = Conv2D(16, (3, 3), activation='relu')(x9)
-#     output = UpSampling2D((2, 2))(x10)
-#     return output
-
-
 def gabor_filter(model):
+    gabor_filters = []
     weightMatrix = [(np.empty(model.layers[1].get_weights()[0].shape, dtype=float)), 
                     (np.empty(model.layers[1].get_weights()[1].shape, dtype=float))]
-    orient = 6
+    orient = 1
     start_lam = 1
-    stop_lam = 1
-    num_lam = 1
+    stop_lam = 1024
+    num_lam = 64
     lambdMatrix = np.linspace(start_lam, stop_lam, num_lam)
     lambdMatrix = np.resize(lambdMatrix, [weightMatrix[0].shape[3]])
     orientMatrix = np.array([(j/orient)*np.pi for j in range(orient)])
     orientMatrix = np.resize(orientMatrix, [weightMatrix[0].shape[3]])
     lamOrientMatrix = list(itertools.product(orientMatrix, lambdMatrix))
+    
+    theta = np.arange(0, np.pi, np.pi / weightMatrix[0].shape[3])
+    lambd = np.arange(0, np.pi, np.pi / weightMatrix[0].shape[3])
+    
     ksize = weightMatrix[0].shape[0]
     for i in range(weightMatrix[0].shape[3]):
-        weightMatrix[0][:,:,0,i] = cv2.getGaborKernel((ksize, ksize), 5.0, lamOrientMatrix[i][0],\
-                                                      lamOrientMatrix[i][1], 1, 0, ktype=cv2.CV_32F)
+        gabor_filter  = cv2.getGaborKernel((ksize, ksize), 5.0, theta[random.randrange(1, len(theta) - 1)], lambd[random.randrange(1, len(lambd) - 1)], 1, 0, ktype=cv2.CV_32F)
+        weightMatrix[0][:,:,0,i] = gabor_filter        
+        gabor_filters.append(gabor_filter)
     # Set Bias
     weightMatrix[1][:] = 1
-    return weightMatrix
+    return weightMatrix, gabor_filters
             
     
 def gabor_layer(layer, kernel_size=7, n_filters=32):
-    conv = Conv2D(n_filters, (kernel_size, kernel_size), padding='same', activation='relu', trainable=False)(layer)
+    conv = Conv2D(n_filters, (kernel_size, kernel_size), padding='same', activation='relu', trainable=False, name='first_layer')(layer)
     return conv
 
 
