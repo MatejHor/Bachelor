@@ -1,0 +1,66 @@
+adaptive_autoencoder364.h5
+
+0.6688
+0.7645
+0.8922
+0.8922
+
+adaptive_autoencoder564.h5
+
+0.8117
+0.8559
+0.9053
+0.9053
+
+adaptive_autoencoder764.h5
+
+0.6328
+0.7291
+0.8599
+0.8599
+
+adaptive_backpropagation364.h5
+
+0.8179
+0.8709
+0.9313
+0.9313
+
+adaptive_backpropagation564.h5
+
+0.8103
+0.8641
+0.9257
+0.9257
+
+adaptive_backpropagation764.h5
+
+0.8264
+0.8741
+0.9276
+0.9276
+
+{'adaptive_autoencoder516.h5': {'Accuracy:': 0.5345458984375,
+                                'F1_score': 0.6605680463778415,
+                                'Precision:': 0.8643414378166199,
+                                'Recall:': 0.8643414378166199},
+ 'adaptive_autoencoder716.h5': {'Accuracy:': 0.767852783203125,
+                                'F1_score': 0.8213175452574426,
+                                'Precision:': 0.8827850222587585,
+                                'Recall:': 0.8827850222587585}}
+{'adaptive_autoencoder316.h5': {'Accuracy:': 0.7232666015625,
+                                'F1_score': 0.8055965876718483,
+                                'Precision:': 0.9090777039527893,
+                                'Recall:': 0.9090777039527893},
+ 'adaptive_backpropagation316.h5': {'Accuracy:': 0.7891845703125,
+                                    'F1_score': 0.852316805456002,
+                                    'Precision:': 0.9264281988143921,
+                                    'Recall:': 0.9264281988143921},
+ 'adaptive_backpropagation516.h5': {'Accuracy:': 0.787994384765625,
+                                    'F1_score': 0.8497211245566728,
+                                    'Precision:': 0.9219405055046082,
+                                    'Recall:': 0.9219405055046082},
+ 'adaptive_backpropagation716.h5': {'Accuracy:': 0.81671142578125,
+                                    'F1_score': 0.8662284050219007,
+                                    'Precision:': 0.922137439250946,
+                                    'Recall:': 0.922137439250946}}                                

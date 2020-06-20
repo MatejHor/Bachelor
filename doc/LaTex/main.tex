@@ -1,0 +1,77 @@
+% TEMPLATE AUTHOR: https://bitbucket.org/m_by/fiit-stu-thesis-template-for-latex
+% EDIT: Matej Horniak
+
+
+% SETTINGS - LATEX
+% to change name, title, supervisor etc. go to preamble/preamble.tex
+\newcommand{\myFontSize}[0] {12pt}
+\newcommand{\mySpacing}[0] {1.5}
+\newcommand{\myBibliography}[0] {bib/refs, appendices/refs1}
+
+
+\documentclass[\myFontSize,a4paper,twoside,openright,slovak]{book}
+\include{preamble/preamble}
+
+\begin{document}
+
+% Minted
+% pygmentize -L styles
+%\usemintedstyle{autumn}
+
+% Titulna strana
+\include{preamble/title}
+
+% Zadanie prace
+\include{preamble/zadanie_prace}
+
+% Cestne prehlasenie
+\include{preamble/cestne_prehlasenie}
+
+% Podakovanie
+\include{preamble/acknowledgements}
+
+% Anotacia (SK EN)
+\include{preamble/annotation}
+
+% Obsah
+\tableofcontents{}
+
+% List of listings
+%\listoffigures\newpage{}
+%\renewcommand\listoflistingscaption{List of Listings}
+%\listoflistings\newpage{}
+
+% References segment
+\begin{refsegment}
+
+% Uvod
+\clearpage\null
+\input{content/uvod.tex}
+
+% Analyza
+\clearpage\null
+\input{content/analyza.tex}
+
+% Navrh
+\clearpage\null
+\input{content/navrh.tex}
+
+% % Osobny plan
+% % \clearpage\null
+% \input{content/plan.tex}
+
+% Literatura
+\printbibliography[heading=references,segment=\therefsegment,resetnumbers=true]
+
+\end{refsegment}
+
+% Appendix
+\appendix
+
+\clearpage\null
+\include{appendices/appendix1}
+
+% \clearpage\null
+% \include{appendices/cdrom}
+
+\end{document}

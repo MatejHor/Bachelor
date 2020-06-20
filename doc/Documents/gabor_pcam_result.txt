@@ -1,0 +1,54 @@
+ 
+adaptive_gabor532.h5 
+Accuracy 0.7091
+F1_score 0.79329
+Precision 0.9001
+Recall 0.9001
+ 
+adaptive_gabor732.h5 
+Accuracy 0.8160
+F1_score 0.8618
+Precision 0.9130
+Recall 0.9130
+ 
+adaptive_gabor932.h5
+Accuracy 0.4997
+F1_score 0.4997
+Precision 0.4997
+Recall 0.4997
+ 
+adaptive_gabor564.h5 
+Accuracy 0.8227
+F1_score 0.8673
+Precision 0.9172
+Recall 0.9172
+ 
+adaptive_gabor764.h5 
+Accuracy 0.5002
+F1_score 0.5001
+Precision 0.5000
+Recall 0.5000
+ 
+adaptive_gabor964.h5 
+Accuracy 0.5002
+F1_score 0.4995
+Precision 0.4989
+Recall 0.4989
+ 
+adaptive_gabor516.h5 
+Accuracy 0.7979
+F1_score 0.8506
+Precision 0.9106
+Recall 0.9106
+ 
+adaptive_gabor716.h5 
+Accuracy 0.5002
+F1_score 0.4990
+Precision 0.4978
+Recall 0.4978
+ 
+adaptive_gabor916.h5 
+Accuracy 0.8140
+F1_score 0.8541
+Precision 0.8984
+Recall 0.8984
